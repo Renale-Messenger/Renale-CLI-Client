@@ -1,13 +1,12 @@
-from rich.console import Console, Group
+from rich.console import Group  # , Console
 from rich import print, get_console
 from rich.align import Align
 from rich.panel import Panel
-from rich.live import Live
-from rich.spinner import Spinner
+# from rich.live import Live
+# from rich.spinner import Spinner
 
-import click
+# import click
 from asyncio import sleep as async_sleep, run as async_run
-from typing import List
 from datetime import datetime
 from pynput import keyboard
 from time import sleep
@@ -16,7 +15,7 @@ import requests
 from sys import exit
 
 
-#keyboard.add_hotkey("escape", lambda: print("Succesfuly escaped"))
+# keyboard.add_hotkey("escape", lambda: print("Succesfuly escaped"))
 
 SERVER_URL: str = "http://127.0.0.1:9789"
 
@@ -25,8 +24,8 @@ def print_err(exc: str):
     print(Panel.fit(f'An error occurred:\n{exc}', style='#ff0000'))
 
 
-def input(prompt: str = '') -> str:
-    return get_console().input(prompt)
+def input(prompt: str = '', **kw: bool) -> str:
+    return get_console().input(prompt, **kw)  # type: ignore
 
 
 class RenaleClient:
@@ -42,7 +41,7 @@ class RenaleClient:
         sign_table = Group(
             Panel(Align.center('Sign In'), style='#1133ff', width=80),
             Panel(Align.center('Sign Up'), style='#00ff00', width=80),
-            )
+        )
         print(Panel(Align.center(sign_table), title='Authorisation', width=25))
         input("Make a choice: ")
 
@@ -51,39 +50,39 @@ class RenaleClient:
             get_console().clear()
             self.name = input('Enter your name: ')
 
-            if not self.name: 
+            if not self.name:
                 print('Name can\'t be empty!')
                 continue
 
             self.password = input('Enter your password: ', password=True)
 
-            if not self.password: 
+            if not self.password:
                 print('Password can\'t be empty!')
                 continue
 
             response = requests.post(url=f'{SERVER_URL}/login',
                                      json={'name': self.name, 'password': self.password})
             if response.status_code != 200:
-                print_err(f'Wrong name or password!')
+                print_err('Wrong name or password!')
                 sleep(5)
                 continue
             break
 
-    def print_messages(self, messages: List):
+    def print_messages(self, messages: list[dict[str, object]]):
         for message in messages:
             dt = datetime.fromtimestamp(message['time'])
 
             print(Panel.fit(f'{message["text"]}', title=f"{dt.strftime('%H:%M:%S')} - {message['name']}", title_align='left'))
             print(' ')
 
-    async def recieve_msg(self, chat):
+    async def recieve_msg(self, chat: dict[str, object]):
         print(chat)
         while True:
             response = requests.get(url=f'{SERVER_URL}/messages',
                                     params={'after': self.after})
             try:
                 messages = list(filter(lambda a: a['chat'] == chat, response.json()['messages']))
-            except requests.exceptions.JSONDecodeError as e:
+            except requests.exceptions.JSONDecodeError:
                 messages = []
             if messages:
                 self.print_messages(messages)
